@@ -75,8 +75,8 @@ if command -v pwsh >/dev/null 2>&1; then
     if ($event.cwd -ne "/tmp/project") { throw "wrong cwd" }
 
     $json = ConvertTo-AdtentionJson $event
-    if ($json -notmatch '"source"\s*:\s*"terminal-enter"') { throw "missing source json" }
-    if ($json -notmatch '"shell"\s*:\s*"powershell"') { throw "missing shell json" }
+    if (-not $json.Contains([char]34 + "source" + [char]34 + ":" + [char]34 + "terminal-enter" + [char]34)) { throw "missing source json" }
+    if (-not $json.Contains([char]34 + "shell" + [char]34 + ":" + [char]34 + "powershell" + [char]34)) { throw "missing shell json" }
   '
 fi
 
