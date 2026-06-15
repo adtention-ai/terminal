@@ -1,0 +1,35 @@
+name: ci
+
+# Same release discipline as ADtention Codex: rebuild the committed client
+# binaries from the root build script and fail when bin/ is stale.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Rust format and tests
+        run: |
+          cargo fmt --check --manifest-path client/Cargo.toml
+          cargo test --locked --manifest-path client/Cargo.toml
+
+      - name: Shell tests
+        run: |
+          bash -n build.sh test.sh
+          bash -n scripts/*.sh
+          ./test.sh
+
+      - name: Committed binaries match a fresh release build
+        run: |
+          ./build.sh
+          if ! git diff --quiet -- bin/; then
+            echo "::error::bin/ does not match a fresh release build. Run ./build.sh and commit the result."
+            git diff --stat -- bin/
+            exit 1
+          fi
+          echo "bin/ matches a fresh release build, and SHA256SUMS is current."

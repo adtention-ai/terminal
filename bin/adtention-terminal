@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+d=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
+arch=$(uname -m)
+
+case "$os" in
+  darwin) os=darwin ;;
+  linux) os=linux ;;
+esac
+
+case "$arch" in
+  x86_64|amd64) arch=amd64 ;;
+  arm64|aarch64) arch=arm64 ;;
+esac
+
+exec "$d/adtention-terminal-$os-$arch" "$@"

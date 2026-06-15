@@ -53,3 +53,15 @@ cache without overwriting an existing `identity.json`.
 
 The tests use fake clients and local cache directories. They do not call the
 ADtention API.
+
+## Release Build
+
+Build all release binaries and checksums:
+
+```sh
+./build.sh
+cd bin && shasum -a 256 -c SHA256SUMS
+```
+
+Tagged releases publish the same platform binaries and `SHA256SUMS`. The tag
+must match `client/Cargo.toml`, for example `v0.1.0`.
