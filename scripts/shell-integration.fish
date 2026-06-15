@@ -14,6 +14,16 @@ function learn-more
     command adtention-terminal learn-more $argv
 end
 
+function __adtention_fish_update_async
+    test "$ADTENTION_AUTO_UPDATE" = "0"; and return 0
+
+    begin
+        command adtention-terminal update </dev/null
+    end >/dev/null 2>/dev/null &
+
+    return 0
+end
+
 function __adtention_fish_cache_dir
     if test -n "$ADTENTION_CACHE"
         printf '%s\n' "$ADTENTION_CACHE"
@@ -51,8 +61,8 @@ end
 
 function __adtention_fish_json_escape --argument-names value
     set -l escaped "$value"
-    set escaped (string replace -a '\' '\\' -- "$escaped")
-    set escaped (string replace -a '"' '\"' -- "$escaped")
+    set escaped (string replace -a "\\" "\\\\" -- "$escaped")
+    set escaped (string replace -a "\"" "\\\"" -- "$escaped")
     printf '%s' "$escaped"
 end
 
@@ -88,4 +98,5 @@ function __adtention_fish_install_enter_binding
     bind \r __adtention_fish_accept_line
 end
 
+__adtention_fish_update_async
 __adtention_fish_install_enter_binding

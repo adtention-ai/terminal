@@ -40,6 +40,14 @@ learn-more() {
   adtention-terminal learn-more "$@"
 }
 
+__adtention_update_async() {
+  [[ "${ADTENTION_AUTO_UPDATE:-1}" != "0" ]] || return 0
+
+  {
+    command adtention-terminal update </dev/null
+  } >/dev/null 2>&1 &!
+}
+
 __adtention_json_escape() {
   local value="$1"
 
@@ -119,4 +127,5 @@ autoload -Uz add-zsh-hook
 add-zsh-hook -d precmd __adtention_precmd 2>/dev/null || true
 add-zsh-hook precmd __adtention_precmd 2>/dev/null || true
 
+__adtention_update_async
 zle -N accept-line __adtention_accept_line 2>/dev/null || true

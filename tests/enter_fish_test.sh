@@ -28,6 +28,8 @@ test_fish_binding_uses_native_execute_function() {
   assert_contains "$functions_text" 'last_render_seen'
   assert_contains "$functions_text" "sed -n '1p'"
   assert_contains "$functions_text" "sed -n '2p'"
+  assert_contains "$functions_text" "__adtention_fish_update_async"
+  assert_contains "$functions_text" "adtention-terminal update"
 }
 
 test_fish_binding_uses_native_execute_function
@@ -37,12 +39,43 @@ if ! command -v fish >/dev/null 2>&1; then
   exit 0
 fi
 
+fish -n "$SCRIPT"
+
 run_fish() {
   fish --no-config -c "$1"
 }
 
+test_startup_update_runs_in_background() {
+  local tmpdir bindir call_file
+  tmpdir="$(mktemp -d)"
+  bindir="$tmpdir/bin"
+  call_file="$tmpdir/call"
+  mkdir -p "$bindir"
+
+  cat >"$bindir/adtention-terminal" <<'FAKE'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$ADTENTION_TEST_CALL_FILE"
+cat >/dev/null
+FAKE
+  chmod +x "$bindir/adtention-terminal"
+
+  PATH="$bindir:$PATH" \
+  ADTENTION_TEST_CALL_FILE="$call_file" \
+    run_fish "source '$SCRIPT'"
+
+  for _ in {1..50}; do
+    if [[ -f "$call_file" ]] && grep -Fq "update" "$call_file"; then
+      return 0
+    fi
+    sleep 0.05
+  done
+
+  fail "startup update did not call fake client"
+}
+
 test_should_trigger_enter() {
   run_fish "
+    set -gx ADTENTION_AUTO_UPDATE 0
     source '$SCRIPT'
     __adtention_fish_should_trigger_enter ''
     and exit 1
@@ -70,6 +103,7 @@ test_build_enter_event_json() {
   event="$(
     cd "$tmpdir"
     run_fish "
+      set -gx ADTENTION_AUTO_UPDATE 0
       source '$SCRIPT'
       __adtention_fish_build_enter_event 'npm \"test\"'
     "
@@ -103,6 +137,7 @@ FAKE
     ADTENTION_TEST_CALL_FILE="$call_file" \
     ADTENTION_TEST_STDIN_FILE="$stdin_file" \
     run_fish "
+      set -gx ADTENTION_AUTO_UPDATE 0
       source '$SCRIPT'
       __adtention_fish_enter_refresh_async 'npm test'
       wait
@@ -138,6 +173,7 @@ FAKE
     ADTENTION_TEST_CALL_FILE="$call_file" \
     ADTENTION_TEST_STDIN_FILE="$stdin_file" \
     run_fish "
+      set -gx ADTENTION_AUTO_UPDATE 0
       source '$SCRIPT'
       __adtention_fish_enter_refresh_async '   '
       wait
@@ -148,6 +184,7 @@ FAKE
   [[ ! -e "$stdin_file" ]] || fail "blank input should not write event JSON"
 }
 
+test_startup_update_runs_in_background
 test_should_trigger_enter
 test_build_enter_event_json
 test_refresh_async_calls_client_with_event_on_stdin

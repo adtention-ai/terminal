@@ -111,6 +111,28 @@ function Start-AdtentionRefreshJob {
     }
 }
 
+function Start-AdtentionUpdateJob {
+    if ($env:ADTENTION_AUTO_UPDATE -eq "0") {
+        return
+    }
+
+    $binary = if ($env:ADTENTION_BINARY) { $env:ADTENTION_BINARY } else { "adtention-terminal" }
+
+    try {
+        Start-Job -Name "adtention-terminal-update" -ArgumentList $binary -ScriptBlock {
+            param(
+                [string] $Binary
+            )
+
+            try {
+                & $Binary update *> $null
+            } catch {
+            }
+        } | Out-Null
+    } catch {
+    }
+}
+
 function Invoke-AdtentionEnterRefresh {
     $commandText = Get-AdtentionCurrentLine
     if (-not (Test-AdtentionShouldTriggerEnter $commandText)) {
@@ -205,6 +227,7 @@ function Enable-AdtentionPromptDisplay {
     }
 }
 
+Start-AdtentionUpdateJob
 Enable-AdtentionPromptDisplay
 Enable-AdtentionPowerShellIntegration
 

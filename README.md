@@ -14,8 +14,8 @@ The Enter wrapper starts a background refresh and then lets the original command
 run normally. The next prompt renders the cached sponsor line.
 
 Run `learn-more` to open the current sponsor page.
-Run `adtention-terminal update` to install the newest release and refresh the
-shell integration files.
+The shell integration also runs `adtention-terminal update` quietly in the
+background whenever a terminal opens. Run it manually to update immediately.
 
 ## Supported Shells
 

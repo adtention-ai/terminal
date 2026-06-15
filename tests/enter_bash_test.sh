@@ -79,9 +79,10 @@ FAKE
   (
     cd "$workdir"
     PATH="$bindir:$PATH"
+    ADTENTION_AUTO_UPDATE=0
     ADTENTION_TEST_CALL_FILE="$call_file"
     ADTENTION_TEST_STDIN_FILE="$stdin_file"
-    export ADTENTION_TEST_CALL_FILE ADTENTION_TEST_STDIN_FILE
+    export ADTENTION_AUTO_UPDATE ADTENTION_TEST_CALL_FILE ADTENTION_TEST_STDIN_FILE
     # shellcheck source=/dev/null
     source "$SCRIPT"
     __adtention_enter_refresh_async "npm test"
@@ -114,9 +115,10 @@ FAKE
   (
     cd "$workdir"
     PATH="$bindir:$PATH"
+    ADTENTION_AUTO_UPDATE=0
     ADTENTION_TEST_CALL_FILE="$call_file"
     ADTENTION_TEST_STDIN_FILE="$stdin_file"
-    export ADTENTION_TEST_CALL_FILE ADTENTION_TEST_STDIN_FILE
+    export ADTENTION_AUTO_UPDATE ADTENTION_TEST_CALL_FILE ADTENTION_TEST_STDIN_FILE
     # shellcheck source=/dev/null
     source "$SCRIPT"
     __adtention_enter_refresh_async "   "
@@ -147,9 +149,10 @@ FAKE
   (
     cd "$workdir"
     PATH="$bindir:$PATH"
+    ADTENTION_AUTO_UPDATE=0
     ADTENTION_TEST_CALL_FILE="$call_file"
     ADTENTION_TEST_STDIN_FILE="$stdin_file"
-    export ADTENTION_TEST_CALL_FILE ADTENTION_TEST_STDIN_FILE
+    export ADTENTION_AUTO_UPDATE ADTENTION_TEST_CALL_FILE ADTENTION_TEST_STDIN_FILE
     # shellcheck source=/dev/null
     source "$SCRIPT"
     __adtention_enter_refresh_async "npm test"
@@ -167,6 +170,7 @@ test_prompt_display_reads_cache_and_marks_render() {
   printf 'title attention line\nprompt attention line\n' >"$cache/terminal.txt"
 
   output="$(
+    ADTENTION_AUTO_UPDATE=0 \
     ADTENTION_CACHE="$cache" bash --noprofile --norc -c "
       source '$SCRIPT'
       __adtention_prompt_display
@@ -197,6 +201,35 @@ test_bash_enter_binding_is_experimental_and_opt_in() {
   assert_contains "$experimental_bindings" '"\C-j": accept-line'
 }
 
+test_startup_update_runs_in_background() {
+  local tmpdir bindir call_file
+  tmpdir="$(mktemp -d)"
+  bindir="$tmpdir/bin"
+  call_file="$tmpdir/call"
+  mkdir -p "$bindir"
+
+  cat >"$bindir/adtention-terminal" <<'FAKE'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$ADTENTION_TEST_CALL_FILE"
+cat >/dev/null
+FAKE
+  chmod +x "$bindir/adtention-terminal"
+
+  PATH="$bindir:$PATH" \
+  ADTENTION_TEST_CALL_FILE="$call_file" \
+    bash --noprofile --norc -c "source '$SCRIPT'"
+
+  for _ in {1..50}; do
+    if [[ -f "$call_file" ]] && grep -Fq "update" "$call_file"; then
+      return 0
+    fi
+    sleep 0.05
+  done
+
+  fail "startup update did not call fake client"
+}
+
+test_startup_update_runs_in_background
 test_should_trigger_enter
 test_build_enter_event_json
 test_refresh_async_calls_client_with_event_on_stdin

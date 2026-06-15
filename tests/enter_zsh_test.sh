@@ -72,7 +72,29 @@ printf '\n---stdin-end---\n' >>"$ADTENTION_FAKE_STDIN"
 FAKE
 chmod +x "$FAKE_BIN/adtention-terminal"
 
+test_startup_update_runs_in_background() {
+  : >"$FAKE_LOG"
+  : >"$FAKE_STDIN"
+
+  ADTENTION_CACHE_DIR="$CACHE_DIR" \
+  ADTENTION_FAKE_LOG="$FAKE_LOG" \
+  ADTENTION_FAKE_STDIN="$FAKE_STDIN" \
+  HOME="$HOME_DIR" \
+  PATH="$FAKE_BIN:$PATH" \
+  SCRIPT="$SCRIPT" \
+  zsh -f <<'ZSH'
+set -e
+source "$SCRIPT"
+ZSH
+
+  wait_for_file_text "$FAKE_LOG" "argv: <update>" || fail "startup update did not call fake client"
+}
+
 test_pure_helpers_and_async_refresh() {
+  : >"$FAKE_LOG"
+  : >"$FAKE_STDIN"
+
+  ADTENTION_AUTO_UPDATE=0 \
   ADTENTION_CACHE_DIR="$CACHE_DIR" \
   ADTENTION_FAKE_LOG="$FAKE_LOG" \
   ADTENTION_FAKE_STDIN="$FAKE_STDIN" \
@@ -130,6 +152,7 @@ test_async_refresh_does_not_block() {
   : >"$FAKE_LOG"
   : >"$FAKE_STDIN"
 
+  ADTENTION_AUTO_UPDATE=0 \
   ADTENTION_CACHE_DIR="$CACHE_DIR" \
   ADTENTION_FAKE_LOG="$FAKE_LOG" \
   ADTENTION_FAKE_SLEEP="1" \
@@ -160,6 +183,7 @@ test_zle_wrapper_accepts_line_and_skips_refresh_when_needed() {
   : >"$FAKE_LOG"
   : >"$FAKE_STDIN"
 
+  ADTENTION_AUTO_UPDATE=0 \
   ADTENTION_CACHE_DIR="$CACHE_DIR" \
   ADTENTION_FAKE_LOG="$FAKE_LOG" \
   ADTENTION_FAKE_STDIN="$FAKE_STDIN" \
@@ -197,6 +221,7 @@ test_precmd_displays_cache_without_refresh() {
   printf 'title attention line\nprompt attention line\n' >"$CACHE_DIR/terminal.txt"
 
   output="$(
+    ADTENTION_AUTO_UPDATE=0 \
     ADTENTION_CACHE="$CACHE_DIR" \
     ADTENTION_FAKE_LOG="$FAKE_LOG" \
     ADTENTION_FAKE_STDIN="$FAKE_STDIN" \
@@ -218,6 +243,7 @@ ZSH
   [[ ! -s "$FAKE_LOG" ]] || fail "precmd display must not call refresh client"
 }
 
+test_startup_update_runs_in_background
 test_pure_helpers_and_async_refresh
 test_async_refresh_does_not_block
 test_zle_wrapper_accepts_line_and_skips_refresh_when_needed

@@ -75,6 +75,16 @@ learn-more() {
   command adtention-terminal learn-more "$@"
 }
 
+__adtention_update_async() {
+  [[ "${ADTENTION_AUTO_UPDATE:-1}" != "0" ]] || return 0
+
+  (
+    command adtention-terminal update </dev/null
+  ) >/dev/null 2>&1 &
+
+  return 0
+}
+
 __adtention_json_escape() {
   local value="${1-}"
   value="${value//\\/\\\\}"
@@ -127,5 +137,6 @@ __adtention_install_bash_enter_binding() {
   bind '"\C-m": "\C-x\C-a\C-j"' 2>/dev/null || return 0
 }
 
+__adtention_update_async
 __adtention_install_prompt_display
 __adtention_install_bash_enter_binding
