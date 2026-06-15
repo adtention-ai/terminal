@@ -35,6 +35,7 @@ assert_contains "$ROOT/.github/workflows/ci.yml" "./build.sh"
 assert_contains "$ROOT/.github/workflows/ci.yml" "git diff --quiet -- bin/"
 assert_contains "$ROOT/.github/workflows/release.yml" "gh release create"
 assert_contains "$ROOT/.github/workflows/release.yml" "adtention-terminal-runtime.tar.gz"
+assert_contains "$ROOT/.github/workflows/release.yml" "sudo chown -R"
 assert_contains "$ROOT/.github/workflows/release.yml" "Tag must match Cargo.toml version"
 assert_contains "$ROOT/.github/workflows/release.yml" "bin/SHA256SUMS"
 

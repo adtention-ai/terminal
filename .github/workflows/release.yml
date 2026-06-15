@@ -25,7 +25,9 @@ jobs:
           fi
 
       - name: Build
-        run: ./build.sh
+        run: |
+          ./build.sh
+          sudo chown -R "$(id -u):$(id -g)" bin
 
       - name: Package runtime files
         run: |
