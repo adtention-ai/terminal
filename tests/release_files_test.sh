@@ -28,6 +28,7 @@ assert_contains "$ROOT/build.sh" "adtention-terminal-darwin-arm64"
 assert_contains "$ROOT/build.sh" "adtention-terminal-linux-amd64"
 assert_contains "$ROOT/build.sh" "adtention-terminal-linux-arm64"
 assert_contains "$ROOT/build.sh" "adtention-terminal-windows-amd64.exe"
+assert_contains "$ROOT/build.sh" "normalize_windows_pe"
 assert_contains "$ROOT/build.sh" "SHA256SUMS"
 
 assert_contains "$ROOT/.github/workflows/ci.yml" "./build.sh"

@@ -85,6 +85,13 @@ docker run --rm --platform linux/amd64 \
     mkdir -p "$bin"
     rm -f "$bin"/adtention-terminal-* "$bin/SHA256SUMS"
 
+    normalize_windows_pe() {
+      file="$1"
+      pe_offset="$(od -An -t u4 -j 60 -N 4 "$file" | tr -d "[:space:]")"
+      timestamp_offset="$((pe_offset + 8))"
+      printf "\000\000\000\000" | dd of="$file" bs=1 seek="$timestamp_offset" conv=notrunc >/dev/null 2>&1
+    }
+
     build_one() {
       target="$1"
       asset="$2"
@@ -96,6 +103,9 @@ docker run --rm --platform linux/amd64 \
       cargo zigbuild --release --locked $strip_config \
         --manifest-path "$CLIENT_DIR/Cargo.toml" --target "$target" >/dev/null
       cp "$CLIENT_DIR/target/$target/release/adtention-terminal$exe" "$bin/$asset$exe"
+      case "$target" in
+        *-windows-*) normalize_windows_pe "$bin/$asset$exe" ;;
+      esac
       chmod +x "$bin/$asset$exe" 2>/dev/null || true
       echo "  built $asset$exe"
     }
