@@ -34,7 +34,11 @@ jobs:
           tar -czf adtention-terminal-runtime.tar.gz \
             bin/adtention-terminal \
             scripts \
+            install.sh \
+            install.ps1 \
             README.md
+          sha256sum install.sh >> bin/SHA256SUMS
+          sha256sum install.ps1 >> bin/SHA256SUMS
           sha256sum adtention-terminal-runtime.tar.gz >> bin/SHA256SUMS
 
       - name: Publish release
@@ -50,5 +54,7 @@ jobs:
             bin/adtention-terminal-linux-amd64 \
             bin/adtention-terminal-linux-arm64 \
             bin/adtention-terminal-windows-amd64.exe \
+            install.sh \
+            install.ps1 \
             adtention-terminal-runtime.tar.gz \
             bin/SHA256SUMS

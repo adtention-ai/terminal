@@ -67,6 +67,7 @@ assert_contains "$profile" "export ADTENTION_INSTALL_ROOT="
 assert_contains "$profile" "custom root"
 assert_contains "$profile" "export ADTENTION_CACHE="
 assert_contains "$profile" "cache with spaces"
+assert_contains "$profile" 'export PATH="$ADTENTION_INSTALL_ROOT/bin:$PATH"'
 assert_contains "$profile" "shell-integration.zsh"
 assert_contains "$profile" "shell-integration.bash"
 assert_contains "$profile" "adtention-terminal doctor"
@@ -126,6 +127,7 @@ if command -v pwsh >/dev/null 2>&1; then
   [ "$block_count" -eq 1 ] || fail "PowerShell installer should write one managed block, found $block_count"
   assert_contains "$ps_profile" "\$env:ADTENTION_INSTALL_ROOT = '$install_root'"
   assert_contains "$ps_profile" "\$env:ADTENTION_CACHE = '$cache'"
+  assert_contains "$ps_profile" "\$env:Path"
   assert_contains "$ps_profile" "shell-integration.ps1"
 fi
 

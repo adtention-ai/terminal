@@ -69,6 +69,10 @@ write_managed_block() {
     printf 'export ADTENTION_CACHE='
     shell_quote "$cache"
     printf '\n'
+    printf 'case ":$PATH:" in\n'
+    printf '  *":$ADTENTION_INSTALL_ROOT/bin:"*) ;;\n'
+    printf '  *) export PATH="$ADTENTION_INSTALL_ROOT/bin:$PATH" ;;\n'
+    printf 'esac\n'
     printf '# Diagnostic: if refreshes do not appear, run: adtention-terminal doctor\n'
     printf 'if [ -n "${ZSH_VERSION:-}" ] && [ -r "$ADTENTION_INSTALL_ROOT/scripts/shell-integration.zsh" ]; then\n'
     printf '  . "$ADTENTION_INSTALL_ROOT/scripts/shell-integration.zsh"\n'

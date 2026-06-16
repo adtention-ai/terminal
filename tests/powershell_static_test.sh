@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PS_SCRIPT="$ROOT/scripts/shell-integration.ps1"
+PS_INSTALL="$ROOT/install.ps1"
 
 fail() {
   echo "FAIL: $*" >&2
@@ -28,6 +29,7 @@ assert_not_contains() {
 }
 
 assert_file "$PS_SCRIPT"
+assert_file "$PS_INSTALL"
 assert_contains "$PS_SCRIPT" "Set-PSReadLineKeyHandler"
 assert_contains "$PS_SCRIPT" "-Key Enter"
 assert_contains "$PS_SCRIPT" "[Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()"
@@ -46,6 +48,9 @@ assert_contains "$PS_SCRIPT" "ConvertTo-Json"
 assert_contains "$PS_SCRIPT" "terminal-enter"
 assert_contains "$PS_SCRIPT" "powershell"
 assert_not_contains "$PS_SCRIPT" "codex plugin"
+assert_contains "$PS_INSTALL" "adtention-terminal.exe"
+assert_contains "$PS_INSTALL" "Get-FileHash"
+assert_contains "$PS_INSTALL" "Invoke-WebRequest"
 
 if command -v pwsh >/dev/null 2>&1; then
   ADTENTION_PS_SCRIPT="$PS_SCRIPT" pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command '

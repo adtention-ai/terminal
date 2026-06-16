@@ -30,13 +30,13 @@ background whenever a terminal opens. Run it manually to update immediately.
 macOS/Linux:
 
 ```sh
-scripts/install-shell-integration.sh
+curl -fsSL https://raw.githubusercontent.com/adtention-ai/terminal/main/install.sh | sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-.\scripts\install-shell-integration.ps1
+irm https://raw.githubusercontent.com/adtention-ai/terminal/main/install.ps1 | iex
 ```
 
 The shell integration writes managed blocks to shell profile files and can be
@@ -68,4 +68,5 @@ cd bin && shasum -a 256 -c SHA256SUMS
 ```
 
 Tagged releases publish the same platform binaries, the runtime package, and
-`SHA256SUMS`. The tag must match `client/Cargo.toml`, for example `v1.0.0`.
+the bootstrap installer. The tag must match `client/Cargo.toml`, for example
+`v1.0.1`.
