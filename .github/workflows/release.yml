@@ -7,6 +7,10 @@ on:
     branches: [main]
     tags: ['v*']
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -29,11 +33,29 @@ jobs:
           fi
           release_tag="$CARGO_V"
           echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
-          if gh release view "$release_tag" >/dev/null 2>&1; then
-            echo "::notice::Release $release_tag already exists; skipping publish."
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-          else
+
+          # A release object existing doesn't mean it's complete: gh release create can fail
+          # partway through uploading assets, leaving a stub release behind. Check the asset
+          # count so a follow-up run resumes an incomplete release instead of treating it as done.
+          # Also distinguish "release not found" (expected, first publish) from any other gh
+          # failure (auth/network hiccup) so a transient error doesn't get treated as green.
+          expected_assets=9
+          if gh_output=$(gh release view "$release_tag" --json assets --jq '.assets | length' 2>&1); then
+            asset_count="$gh_output"
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+            if [ "$asset_count" -ge "$expected_assets" ]; then
+              echo "::notice::Release $release_tag already has all $asset_count assets; skipping publish."
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice::Release $release_tag exists but only has $asset_count/$expected_assets assets; resuming publish."
+              echo "should_release=true" >> "$GITHUB_OUTPUT"
+            fi
+          elif echo "$gh_output" | grep -qi "release not found"; then
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
             echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Could not check release status for $release_tag: $gh_output"
+            exit 1
           fi
 
       - name: Build
@@ -60,17 +82,28 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.version.outputs.release_tag }}" \
-            --target "$GITHUB_SHA" \
-            --title "${{ steps.version.outputs.release_tag }}" \
-            --notes "Release build from this tag. Verify a download with:
-          \`shasum -a 256 -c SHA256SUMS\`" \
-            bin/adtention-terminal-darwin-amd64 \
-            bin/adtention-terminal-darwin-arm64 \
-            bin/adtention-terminal-linux-amd64 \
-            bin/adtention-terminal-linux-arm64 \
-            bin/adtention-terminal-windows-amd64.exe \
-            install.sh \
-            install.ps1 \
-            adtention-terminal-runtime.tar.gz \
+          release_tag="${{ steps.version.outputs.release_tag }}"
+          assets=(
+            bin/adtention-terminal-darwin-amd64
+            bin/adtention-terminal-darwin-arm64
+            bin/adtention-terminal-linux-amd64
+            bin/adtention-terminal-linux-arm64
+            bin/adtention-terminal-windows-amd64.exe
+            install.sh
+            install.ps1
+            adtention-terminal-runtime.tar.gz
             bin/SHA256SUMS
+          )
+          if [ "${{ steps.version.outputs.release_exists }}" = "true" ]; then
+            # Release object already exists but was missing assets (a prior run's gh release
+            # create failed partway through uploading) — resume it instead of re-creating.
+            echo "::notice::Resuming incomplete release $release_tag by re-uploading assets."
+            gh release upload "$release_tag" "${assets[@]}" --clobber
+          else
+            gh release create "$release_tag" \
+              --target "$GITHUB_SHA" \
+              --title "$release_tag" \
+              --notes "Release build from this tag. Verify a download with:
+          \`shasum -a 256 -c SHA256SUMS\`" \
+              "${assets[@]}"
+          fi
